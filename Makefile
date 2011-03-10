@@ -1,4 +1,4 @@
-CFLAGS := -Wall -Wextra -lm -ljpeg -fPIC
+CFLAGS += -Wall -Wextra -lm -ljpeg -fPIC -O3
 
 all: cfractal cfractal.so
 
