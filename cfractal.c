@@ -25,11 +25,44 @@ double *new_angle_set(int n, int seed) {
 	return angles;
 }
 
+colour *new_colour_set(int n) {
+	colour *colours;
+	int k;
+	if ((colours = (colour *)malloc(n * sizeof(colour))) == NULL)
+		return NULL;
+	
+	for (k = 0; k < n; k++) {
+		double hue = k * 360.0/n;
+		if (hue < 120) {
+			// red-green
+			colours[k].red   = (unsigned char)(255 * (1 - hue/120));
+			colours[k].green = (unsigned char)(255 * (hue/120));
+			colours[k].blue  = 0;
+		} else if (hue < 240) {
+			// green-blue
+			colours[k].green = (unsigned char)(255 * (1 - (hue - 120)/120));
+			colours[k].blue  = (unsigned char)(255 * ((hue - 120)/120));
+			colours[k].red   = 0;
+		} else {
+			// blue-red
+			colours[k].blue  = (unsigned char)(255 * (1 - (hue - 240)/120));
+			colours[k].red   = (unsigned char)(255 * ((hue - 240)/120));
+			colours[k].green = 0;
+		}
+	}
+	
+	return colours;
+}
+
 double normalize(double m) {
 	return m - (int)(m / (M_PI * 2)) * (M_PI * 2);
 }
 
-int iterate(vector **v, int *vsize, double *angles, int asize) {
+unsigned char tint(old, new, level) {
+	return old * (level - 1) / level + new / level;
+}
+
+int iterate(vector **v, int *vsize, double *angles, colour *colours, int asize, int level) {
 	vector *new, *old;
 	int nvsize, ovsize, k, j;
 	
@@ -47,6 +80,9 @@ int iterate(vector **v, int *vsize, double *angles, int asize) {
 			new[i].magnitude = old[k].magnitude * 0.5;
 			new[i].x = old[k].x + old[k].magnitude * cos(new[i].angle);
 			new[i].y = old[k].y + old[k].magnitude * sin(new[i].angle);
+			new[i].c.red   = tint(old[k].c.red,   colours[j].red,   level);
+			new[i].c.green = tint(old[k].c.green, colours[j].green, level);
+			new[i].c.blue  = tint(old[k].c.blue,  colours[j].blue,  level);
 		}
 	}
 	
@@ -58,8 +94,8 @@ int iterate(vector **v, int *vsize, double *angles, int asize) {
 	return 0;
 }
 
-#define BLACK 0
-#define WHITE 255
+#define PX_MIN 0
+#define PX_MAX 255
 
 int pt_okay(double x, double y, image *i) {
 	if (x > i->width || y > i->height) {
@@ -69,22 +105,47 @@ int pt_okay(double x, double y, image *i) {
 	return 1;
 }
 
+void pixel_add(unsigned char *pixel, unsigned char value) {
+	if (*pixel + value > PX_MAX) {
+		*pixel = PX_MAX;
+	} else {
+		*pixel += value;
+	}
+}
+
+colour BLACK = { .red = 0x00, .green = 0x00, .blue = 0x00 };
+colour WHITE = { .red = 0xff, .green = 0xff, .blue = 0xff };
+
+void dither_add(image *i, double x, double y, int choffset, unsigned char value) {
+	double xw, yw;
+	xw = x - (int)x;
+	yw = y - (int)y;
+	
+	pixel_add(i->buf + (int)floor(x) * i->channels + (int)floor(y) * i->pitch + choffset,
+			  (unsigned char)(value * (1 - xw) * (1 - yw)));
+	pixel_add(i->buf + (int)ceil(x)  * i->channels + (int)floor(y) * i->pitch + choffset,
+			  (unsigned char)(value *      xw  * (1 - yw)));
+	pixel_add(i->buf + (int)floor(x) * i->channels + (int)ceil(y)  * i->pitch + choffset,
+			  (unsigned char)(value * (1 - xw) *      yw ));
+	pixel_add(i->buf + (int)ceil(x)  * i->channels + (int)ceil(y)  * i->pitch + choffset,
+			  (unsigned char)(value *      xw  *      yw ));
+}
+
 void render(vector *v, int vsize, image *i) {
 	int k;
 	// make black
-	for (k = 0; k < (i->width * i->height); k++) {
-		i->buf[k] = BLACK;
+	for (k = 0; k < (i->width * i->height * i->channels); k++) {
+		if (i->channels == 4 && k % 4 == 3)
+			i->buf[k] = 0xff;
+		else
+			i->buf[k] = 0x00;
 	}
 	
 	for (k = 0; k < vsize; k++) {
 		if (pt_okay(v[k].x, v[k].y, i)) {
-			double xw, yw;
-			xw = v[k].x - (int)v[k].x;
-			yw = v[k].y - (int)v[k].y;
-			i->buf[(int)v[k].x + (int)v[k].y * i->pitch] += (int)(WHITE * (1 - xw) * (1 - yw));
-			i->buf[(int)v[k].x + 1 + (int)v[k].y * i->pitch] += (int)(WHITE * xw * (1 - yw));
-			i->buf[(int)v[k].x + ((int)v[k].y + 1) * i->pitch] += (int)(WHITE * (1 - xw) * yw);
-			i->buf[(int)v[k].x + 1 + ((int)v[k].y + 1) * i->pitch] += (int)(WHITE * xw * yw);
+			dither_add(i, v[k].x, v[k].y, 0, v[k].c.red);
+			dither_add(i, v[k].x, v[k].y, 1, v[k].c.green);
+			dither_add(i, v[k].x, v[k].y, 2, v[k].c.blue);
 		}
 	}
 }

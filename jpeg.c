@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 	int size, branch, level, seed, k, vsize = 1;
 	vector *v;
 	double *a;
+	colour *c;
 	
 	if (argc != 6) {
 		fprintf(stderr, "usage: cfractal size branch level seed outfile\n");
@@ -33,20 +34,26 @@ int main(int argc, char **argv) {
 	v->x = v->y = size * 0.5;
 	v->angle = 0;
 	v->magnitude = size * 0.5 * 0.5;
+	v->c.red = v->c.green = v->c.blue = 0xff;
 	
 	if ((a = new_angle_set(branch, seed)) == NULL) {
 		fprintf(stderr, OUT_OF_MEMORY);
 		return 2;
 	}
 	
+	if ((c = new_colour_set(branch)) == NULL) {
+		fprintf(stderr, OUT_OF_MEMORY);
+		return 2;
+	}
+	
 	for (k = 0; k < level; k++) {
-		if (iterate(&v, &vsize, a, branch) > 0) {
+		if (iterate(&v, &vsize, a, c, branch, k + 1) > 0) {
 			fprintf(stderr, OUT_OF_MEMORY);
 			return 2;
 		}
 	}
 	
-	if ((i = new_image(size, size, 1)) == NULL) {
+	if ((i = new_image(size, size, 3)) == NULL) {
 		fprintf(stderr, OUT_OF_MEMORY);
 		return 2;
 	}
@@ -60,6 +67,7 @@ int main(int argc, char **argv) {
 	del_image(i);
 	free(a);
 	free(v);
+	free(c);
 	
 	return 0;
 }

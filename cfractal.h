@@ -1,8 +1,15 @@
 typedef struct {
+	unsigned char red;
+	unsigned char green;
+	unsigned char blue;
+} colour;
+
+typedef struct {
 	double x;
 	double y;
 	double angle; // radians
 	double magnitude;
+	colour c;
 } vector;
 
 typedef struct {
@@ -14,7 +21,8 @@ typedef struct {
 } image;
 
 double *new_angle_set(int n, int seed);
-int iterate(vector **old, int *vsize, double *angles, int asize);
+colour *new_colour_set(int n);
+int iterate(vector **old, int *vsize, double *angles, colour *colours, int asize, int level);
 void render(vector *v, int vsize, image *i);
 image *new_image(int width, int height, int channels);
 void del_image(image *i);
