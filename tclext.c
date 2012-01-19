@@ -1,3 +1,11 @@
+/*
+ * Copyright 2012 Jonathan David Page. All rights reserved.
+ *
+ * Original filename: tclext.c
+ *
+ * Exposes the functions defined in cfractal.c to the Tcl interpreter.
+ */
+
 #include <stdlib.h>
 #include <tcl.h>
 #include <tk.h>

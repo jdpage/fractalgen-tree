@@ -1,3 +1,11 @@
+/*
+ * Copyright 2012 Jonathan David Page. All rights reserved.
+ *
+ * Original filename: cfractal.c
+ *
+ * This file contains the fractal generation algorithm and plotting code.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

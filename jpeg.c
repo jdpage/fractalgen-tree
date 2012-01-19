@@ -1,3 +1,11 @@
+/*
+ * Copyright 2012 Jonathan David Page. All rights reserved.
+ *
+ * Original filename: jpeg.c
+ *
+ * This file contains the code for saving the generated image as a jpeg file.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <jpeglib.h>

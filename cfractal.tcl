@@ -1,5 +1,11 @@
 #!/usr/bin/env wish8.5
 
+# Copyright 2012 Jonathan David Page. All rights reserved.
+#
+# Original filename: cfractal.tcl
+#
+# This file provides a GUI for interacting with the algorithm.
+
 catch {load [file join [file dirname [info script]] libcfractal.so]}
 
 package require Tk

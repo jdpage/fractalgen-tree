@@ -1,3 +1,11 @@
+/*
+ * Copyright 2012 Jonathan David Page. All rights reserved.
+ *
+ * Original filename: cfractal.h
+ *
+ * This file contains the exports for cfractal.c
+ */
+
 typedef struct {
 	unsigned char red;
 	unsigned char green;
